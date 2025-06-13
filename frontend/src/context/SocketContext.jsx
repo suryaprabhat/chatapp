@@ -14,7 +14,7 @@ export const SocketContextProvider = ({ children }) => {
 	useEffect(() => {
 		if (authUser) {
 			// Setup the socket connection
-			const socket = io("http://localhost:5000", {
+			const socket = io("https://chatapp-five-henna.vercel.app/", {
 				transports: ["websocket"], 
 				withCredentials: true, // 👈 very important
 				auth: {
