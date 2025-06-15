@@ -1,4 +1,5 @@
 import { createContext, useState, useEffect, useContext } from "react";
+import PropTypes from "prop-types";
 import { useAuthContext } from "./AuthContext";
 import io from "socket.io-client";
 
@@ -13,23 +14,22 @@ export const SocketContextProvider = ({ children }) => {
 
 	useEffect(() => {
 		if (authUser) {
-			// Setup the socket connection
-			const socket = io("https://chatapp-wl3v.onrender.com", {
-				transports: ["websocket"], 
-				withCredentials: true, // 👈 very important
+			const socketInstance = io("https://chatapp-wl3v.onrender.com", {
+				transports: ["websocket"],
+				withCredentials: true,
 				auth: {
-					userId: authUser._id, // 👈 pass as auth, not query
+					userId: authUser._id,
 				},
 			});
 
-			setSocket(socket);
+			setSocket(socketInstance);
 
-			socket.on("getOnlineUsers", (users) => {
+			socketInstance.on("getOnlineUsers", (users) => {
 				setOnlineUsers(users);
 			});
 
 			return () => {
-				socket.disconnect();
+				socketInstance.disconnect();
 			};
 		} else {
 			if (socket) {
@@ -44,4 +44,8 @@ export const SocketContextProvider = ({ children }) => {
 			{children}
 		</SocketContext.Provider>
 	);
+};
+
+SocketContextProvider.propTypes = {
+	children: PropTypes.node.isRequired,
 };
