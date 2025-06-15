@@ -6,7 +6,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:5000', // your backend port
+        target: 'https://chatapp-wl3v.onrender.com', // your backend port
         changeOrigin: true,
         secure: false,
       },

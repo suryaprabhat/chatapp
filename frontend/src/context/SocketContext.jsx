@@ -14,7 +14,7 @@ export const SocketContextProvider = ({ children }) => {
 	useEffect(() => {
 		if (authUser) {
 			// Setup the socket connection
-			const socket = io("https://chatapp-five-henna.vercel.app/", {
+			const socket = io("https://chatapp-wl3v.onrender.com", {
 				transports: ["websocket"], 
 				withCredentials: true, // 👈 very important
 				auth: {
