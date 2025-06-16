@@ -17,23 +17,20 @@ const PORT = process.env.PORT || 5000;
 app.use(
   cors({
     origin: function (origin, callback) {
-      const allowedOrigins = [
-        "http://localhost:5173",
-        "https://chatapp-eight-pied.vercel.app"
-      ];
       if (
-        !origin || // allow mobile apps, Postman, SSR, etc.
-        allowedOrigins.includes(origin) ||
-        origin.endsWith(".vercel.app")
+        !origin || // for tools like Postman or mobile apps
+        origin.endsWith(".vercel.app") ||
+        origin === "http://localhost:5173"
       ) {
         callback(null, true);
       } else {
-        callback(new Error(`❌ Not allowed by CORS: ${origin}`));
+        callback(new Error(`Not allowed by CORS: ${origin}`));
       }
     },
     credentials: true,
   })
 );
+
 
 // --- 🔧 Middlewares ---
 app.use(express.json());
