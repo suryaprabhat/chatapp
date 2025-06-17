@@ -32,8 +32,7 @@ app.use(
     },
     credentials: true,
   }),
-  console.log("🧪 Incoming request from:", origin);
-
+  console.log("🧪 Incoming request from:", origin)
 );
 
 
