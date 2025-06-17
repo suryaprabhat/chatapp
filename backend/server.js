@@ -14,21 +14,26 @@ dotenv.config();
 const PORT = process.env.PORT || 5000;
 
 // --- 🔐 Smart CORS Setup ---
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://chatapp-eight-pied.vercel.app",
+  "https://chatapp-git-main-suryaprabhats-projects.vercel.app",
+  "https://chatapp-b9w2li192-suryaprabhats-projects.vercel.app"
+];
+
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (
-        !origin || // for tools like Postman or mobile apps
-        origin.endsWith(".vercel.app") ||
-        origin === "http://localhost:5173"
-      ) {
+      if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        callback(new Error(`Not allowed by CORS: ${origin}`));
+        callback(new Error("❌ CORS Not allowed for origin: " + origin));
       }
     },
     credentials: true,
-  })
+  }),
+  console.log("🧪 Incoming request from:", origin);
+
 );
 
 
