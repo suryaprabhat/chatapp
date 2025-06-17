@@ -38,7 +38,7 @@ const io = new Server(server, {
 });
 
 // 🔌 Socket Logic
-const userSocketMap = {};
+const userSocketMap = {}; // userId: socketId
 
 export const getReceiverSocketId = (receiverId) => {
   return userSocketMap[receiverId];
@@ -68,8 +68,21 @@ io.on("connection", (socket) => {
     return;
   }
 
+  // 🔁 Send updated list of online users to all
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
+  // 💬 Handle incoming message and relay to receiver
+  socket.on("newMessage", ({ receiverId, message, senderId }) => {
+    const receiverSocketId = getReceiverSocketId(receiverId);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("newMessage", {
+        message,
+        senderId,
+      });
+    }
+  });
+
+  // ❌ Handle disconnect
   socket.on("disconnect", () => {
     console.log("🔴 User disconnected:", socket.id);
     if (userId) {

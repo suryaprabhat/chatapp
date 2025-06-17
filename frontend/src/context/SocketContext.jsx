@@ -10,6 +10,7 @@ export const useSocketContext = () => useContext(SocketContext);
 export const SocketContextProvider = ({ children }) => {
 	const [socket, setSocket] = useState(null);
 	const [onlineUsers, setOnlineUsers] = useState([]);
+	const [incomingMessage, setIncomingMessage] = useState(null);
 	const { authUser } = useAuthContext();
 
 	useEffect(() => {
@@ -17,30 +18,35 @@ export const SocketContextProvider = ({ children }) => {
 			const socketInstance = io("https://chatapp-wl3v.onrender.com", {
 				transports: ["websocket"],
 				withCredentials: true,
-				secure: true, // ✅ Required for HTTPS cross-origin socket connection
-				auth: {
-					userId: authUser?._id,
-				},
+				secure: true,
 			});
 
-			// Optional: Catch connection issues
+			socketInstance.on("connect", () => {
+				console.log("✅ Connected to socket server:", socketInstance.id);
+			});
+
 			socketInstance.on("connect_error", (err) => {
 				console.error("❌ Socket connection error:", err.message);
 			});
 
-			setSocket(socketInstance);
-
-			// Listen for the online users list
+			// ✅ Handle list of online users
 			socketInstance.on("getOnlineUsers", (users) => {
 				setOnlineUsers(users);
 			});
 
-			// Clean up on unmount or logout
+			// ✅ Handle new incoming messages
+			socketInstance.on("newMessage", (data) => {
+				setIncomingMessage(data);
+			});
+
+			setSocket(socketInstance);
+
+			// 🧹 Cleanup on unmount or logout
 			return () => {
 				socketInstance.disconnect();
+				setSocket(null);
 			};
 		} else {
-			// Disconnect socket if user logs out
 			if (socket) {
 				socket.disconnect();
 				setSocket(null);
@@ -48,8 +54,22 @@ export const SocketContextProvider = ({ children }) => {
 		}
 	}, [authUser]);
 
+	// ✅ Optional: function to emit message from one place
+	const sendMessage = (receiverId, message, senderId) => {
+		if (socket) {
+			socket.emit("newMessage", { receiverId, message, senderId });
+		}
+	};
+
 	return (
-		<SocketContext.Provider value={{ socket, onlineUsers }}>
+		<SocketContext.Provider
+			value={{
+				socket,
+				onlineUsers,
+				incomingMessage,
+				sendMessage,
+			}}
+		>
 			{children}
 		</SocketContext.Provider>
 	);
