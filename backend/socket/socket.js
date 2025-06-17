@@ -4,59 +4,61 @@ import http from "http";
 import express from "express";
 import cors from "cors";
 
-const app = express();
-const server = http.createServer(app); // create HTTP server for socket.io to hook into
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://chatapp-eight-pied.vercel.app",
+  "https://chatapp-git-main-suryaprabhats-projects.vercel.app",
+  "https://chatapp-b9w2li192-suryaprabhats-projects.vercel.app"
+];
 
-// CORS middleware for REST APIs
+const app = express();
+const server = http.createServer(app);
+
+// ✅ CORS for REST endpoints
 app.use(cors({
-	origin: ["http://localhost:5173"], // frontend dev origin
-	credentials: true
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
 }));
 
-// Initialize Socket.IO server
+// ✅ CORS for Socket.IO
 const io = new Server(server, {
-	cors: {
-		origin: ["http://localhost:5173"],
-		methods: ["GET", "POST"],
-		credentials: true
-	}
+  cors: {
+    origin: allowedOrigins,
+    methods: ["GET", "POST"],
+    credentials: true
+  }
 });
 
-// In-memory store to map userId to socket.id
+// 🔌 Socket logic
 const userSocketMap = {};
 
-// Utility function to get a user's socket ID
 export const getReceiverSocketId = (receiverId) => {
-	return userSocketMap[receiverId];
+  return userSocketMap[receiverId];
 };
 
-// Listen for new connections
 io.on("connection", (socket) => {
-	console.log("🟢 A user connected:", socket.id);
+  console.log("🟢 A user connected:", socket.id);
 
-	const userId = socket.handshake.auth?.userId;
+  const userId = socket.handshake.auth?.userId;
 
-	// Save socket.id against userId if it exists
-	if (userId) {
-		userSocketMap[userId] = socket.id;
-		console.log(`🔐 User authenticated: ${userId} => ${socket.id}`);
-	}
+  if (userId) {
+    userSocketMap[userId] = socket.id;
+    console.log(`🔐 User authenticated: ${userId} => ${socket.id}`);
+  }
 
-	// Send the list of online users to all connected clients
-	io.emit("getOnlineUsers", Object.keys(userSocketMap));
+  io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
-	// Handle disconnection
-	socket.on("disconnect", () => {
-		console.log("🔴 User disconnected:", socket.id);
-
-		// Remove the disconnected user's mapping
-		if (userId) {
-			delete userSocketMap[userId];
-		}
-
-		// Broadcast updated user list
-		io.emit("getOnlineUsers", Object.keys(userSocketMap));
-	});
+  socket.on("disconnect", () => {
+    console.log("🔴 User disconnected:", socket.id);
+    if (userId) delete userSocketMap[userId];
+    io.emit("getOnlineUsers", Object.keys(userSocketMap));
+  });
 });
 
 export { app, io, server };
