@@ -1,8 +1,9 @@
+// server.js
 import express from "express";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
-import cors from "cors";
 import http from "http";
+import { Server } from "socket.io"; // ✅ socket.io imported here
 
 import connectToMongoDB from "./db/connectToMongoDB.js";
 import authRoutes from "./routes/auth.routes.js";
@@ -12,11 +13,10 @@ import userRoutes from "./routes/user.routes.js";
 dotenv.config();
 
 const app = express();
-const server = http.createServer(app); // Create raw server for socket.io if needed
-
+const server = http.createServer(app); // ✅ raw http server for socket.io
 const PORT = process.env.PORT || 5000;
 
-// --- ✅ CORS Middleware ---
+// ✅ CORS config
 const allowedOrigins = [
   "http://localhost:5173",
   "https://chatapp-eight-pied.vercel.app",
@@ -40,16 +40,46 @@ app.use((req, res, next) => {
   next();
 });
 
-// --- ✅ Other Middlewares ---
 app.use(express.json());
 app.use(cookieParser());
 
-// --- ✅ Routes ---
+// ✅ API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", MessageRoutes);
 app.use("/api/users", userRoutes);
 
-// --- ✅ DB & Server ---
+// ✅ Socket.IO
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
+
+const userSocketMap = {};
+
+export const getReceiverSocketId = (receiverId) => userSocketMap[receiverId];
+
+io.on("connection", (socket) => {
+  console.log("🟢 A user connected:", socket.id);
+
+  const userId = socket.handshake.auth?.userId;
+  if (userId) {
+    userSocketMap[userId] = socket.id;
+    console.log(`🔐 User authenticated: ${userId} => ${socket.id}`);
+  }
+
+  io.emit("getOnlineUsers", Object.keys(userSocketMap));
+
+  socket.on("disconnect", () => {
+    console.log("🔴 User disconnected:", socket.id);
+    if (userId) delete userSocketMap[userId];
+    io.emit("getOnlineUsers", Object.keys(userSocketMap));
+  });
+});
+
+// ✅ Start server
 server.listen(PORT, () => {
   connectToMongoDB();
   console.log(`✅ Server is running on port ${PORT}`);

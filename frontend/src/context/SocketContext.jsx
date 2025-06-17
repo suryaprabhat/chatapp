@@ -19,7 +19,7 @@ export const SocketContextProvider = ({ children }) => {
 				withCredentials: true,
 				secure: true, // ✅ Required for HTTPS cross-origin socket connection
 				auth: {
-					userId: authUser._id,
+					userId: authUser?._id,
 				},
 			});
 

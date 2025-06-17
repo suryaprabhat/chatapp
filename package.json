@@ -1,16 +1,16 @@
 {
   "name": "chat",
   "version": "1.0.0",
-  "description": "",
-  "main": "server.js",
+  "description": "Full-stack Chat App",
+  "main": "backend/server.js",
   "scripts": {
-    "server": "nodemon backend/server.js",
-    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js",               // for local dev
+    "start": "node backend/server.js",                // for production (Render uses this)
     "build": "npm install && npm install --prefix frontend && npm run build --prefix frontend"
   },
   "type": "module",
-  "keywords": [],
-  "author": "",
+  "keywords": ["chat", "express", "socket.io", "mongodb", "react"],
+  "author": "your-name-here",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^3.0.2",
