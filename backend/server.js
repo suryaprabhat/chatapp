@@ -29,10 +29,10 @@ app.use(
       } else {
         callback(new Error("❌ CORS Not allowed for origin: " + origin));
       }
+      console.log("🧪 Incoming request from:", origin)
     },
     credentials: true,
   }),
-  console.log("🧪 Incoming request from:", origin)
 );
 
 
