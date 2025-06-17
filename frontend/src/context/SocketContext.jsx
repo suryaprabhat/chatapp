@@ -14,47 +14,48 @@ export const SocketContextProvider = ({ children }) => {
 	const { authUser } = useAuthContext();
 
 	useEffect(() => {
-		if (authUser) {
-			const socketInstance = io("https://chatapp-wl3v.onrender.com", {
-				transports: ["websocket"],
-				withCredentials: true,
-				secure: true,
-			});
-
-			socketInstance.on("connect", () => {
-				console.log("✅ Connected to socket server:", socketInstance.id);
-			});
-
-			socketInstance.on("connect_error", (err) => {
-				console.error("❌ Socket connection error:", err.message);
-			});
-
-			// ✅ Handle list of online users
-			socketInstance.on("getOnlineUsers", (users) => {
-				setOnlineUsers(users);
-			});
-
-			// ✅ Handle new incoming messages
-			socketInstance.on("newMessage", (data) => {
-				setIncomingMessage(data);
-			});
-
-			setSocket(socketInstance);
-
-			// 🧹 Cleanup on unmount or logout
-			return () => {
-				socketInstance.disconnect();
-				setSocket(null);
-			};
-		} else {
+		if (!authUser) {
+			// 🚪 Disconnect if logged out
 			if (socket) {
 				socket.disconnect();
 				setSocket(null);
 			}
+			return;
 		}
+
+		// ✅ Connect to socket
+		const socketInstance = io("https://chatapp-wl3v.onrender.com", {
+			transports: ["websocket"],
+			withCredentials: true,
+			secure: true,
+		});
+
+		socketInstance.on("connect", () => {
+			console.log("✅ Connected to socket server:", socketInstance.id);
+		});
+
+		socketInstance.on("connect_error", (err) => {
+			console.error("❌ Socket connection error:", err.message);
+		});
+
+		socketInstance.on("getOnlineUsers", (users) => {
+			setOnlineUsers(users);
+		});
+
+		socketInstance.on("newMessage", (message) => {
+			console.log("📩 New incoming message:", message);
+			setIncomingMessage(message);
+		});
+
+		setSocket(socketInstance);
+
+		return () => {
+			socketInstance.disconnect();
+			setSocket(null);
+		};
 	}, [authUser]);
 
-	// ✅ Optional: function to emit message from one place
+	// Optional: Emit message
 	const sendMessage = (receiverId, message, senderId) => {
 		if (socket) {
 			socket.emit("newMessage", { receiverId, message, senderId });
