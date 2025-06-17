@@ -6,11 +6,12 @@ const generateTokenAndSetCookie = (userId, res) => {
     });
 
   res.cookie("jwt", token, {
-    maxAge: 15 * 24 * 60 * 60 * 1000, // 15 days
-    httpOnly: true, // prevent XSS attacks cross-site scripting attacks
-    sameSite: "strict", // CSRF attacks cross-site request forgery attacks
-    secure: process.env.NODE_ENV !== "development", // only use in production
-  });
+  maxAge: 15 * 24 * 60 * 60 * 1000, // 15 days
+  httpOnly: true,
+  sameSite: "None",           // ✅ Allows cross-site requests (Vercel → Render)
+  secure: true                // ✅ Required when sameSite is "None" (HTTPS only)
+});
+
 };
 
 export default generateTokenAndSetCookie;

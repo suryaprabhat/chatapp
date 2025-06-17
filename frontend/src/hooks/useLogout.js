@@ -8,10 +8,14 @@ const useLogout = () => {
   const logout = async() =>{
     setloading(true);
     try{
-        const res = await fetch("https://chatapp-wl3v.onrender.com/api/auth/logout", {
+        const res = await fetch(
+          "https://chatapp-wl3v.onrender.com/api/auth/logout",
+          {
             method: "POST",
-            headers:{"Content-Type": "application/json"},
-        });
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+          }
+        );
         const data = await res.json();
         if(data.error){
             throw new Error(data.error);
