@@ -19,46 +19,31 @@ const allowedOrigins = [
   "https://chatapp-b9w2li192-suryaprabhats-projects.vercel.app"
 ];
 
-// ✅ Logging to see where requests come from
+// ✅ Correct and simplified CORS setup
 app.use((req, res, next) => {
-  console.log("🧪 Incoming request from:", req.headers.origin);
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  }
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
   next();
 });
 
-// ✅ CORS for preflight (OPTIONS requests)
-app.options("*", cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("❌ CORS not allowed: " + origin));
-    }
-  },
-  credentials: true,
-}));
-
-// ✅ CORS for all requests
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("❌ CORS not allowed: " + origin));
-    }
-  },
-  credentials: true,
-}));
-
-// ✅ Middlewares
+// ✅ Essential middlewares
 app.use(express.json());
 app.use(cookieParser());
 
-// ✅ Routes
+// ✅ API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", MessageRoutes);
 app.use("/api/users", userRoutes);
 
-// ✅ Start server
+// ✅ Server listener
 server.listen(PORT, () => {
   connectToMongoDB();
   console.log(`✅ Server is running on port ${PORT}`);
