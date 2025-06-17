@@ -3,6 +3,8 @@ import { Server } from "socket.io";
 import http from "http";
 import express from "express";
 import cors from "cors";
+import cookie from "cookie";
+import jwt from "jsonwebtoken";
 
 const allowedOrigins = [
   "http://localhost:5173",
@@ -14,7 +16,7 @@ const allowedOrigins = [
 const app = express();
 const server = http.createServer(app);
 
-// ✅ CORS for REST endpoints
+// ✅ CORS for REST APIs
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
@@ -31,11 +33,11 @@ const io = new Server(server, {
   cors: {
     origin: allowedOrigins,
     methods: ["GET", "POST"],
-    credentials: true
-  }
+    credentials: true,
+  },
 });
 
-// 🔌 Socket logic
+// 🔌 Socket Logic
 const userSocketMap = {};
 
 export const getReceiverSocketId = (receiverId) => {
@@ -45,18 +47,34 @@ export const getReceiverSocketId = (receiverId) => {
 io.on("connection", (socket) => {
   console.log("🟢 A user connected:", socket.id);
 
-  const userId = socket.handshake.auth?.userId;
+  let userId;
 
-  if (userId) {
+  try {
+    const cookies = cookie.parse(socket.handshake.headers.cookie || "");
+    const token = cookies.jwt;
+
+    if (!token) {
+      console.warn("❌ No JWT found in cookies");
+      return;
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    userId = decoded.userId;
+
     userSocketMap[userId] = socket.id;
     console.log(`🔐 User authenticated: ${userId} => ${socket.id}`);
+  } catch (err) {
+    console.error("❌ JWT verification failed:", err.message);
+    return;
   }
 
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
   socket.on("disconnect", () => {
     console.log("🔴 User disconnected:", socket.id);
-    if (userId) delete userSocketMap[userId];
+    if (userId) {
+      delete userSocketMap[userId];
+    }
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
   });
 });
